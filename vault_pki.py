@@ -1,7 +1,17 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+
 """
 
 
 """
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+__author__ = 'Daniel Wilcox (dwilcox@ripple.com)'
 
 import logging
 import os
@@ -105,6 +115,7 @@ def _write_certs_to_minion(fqdn, dest_path, cert_data):
         'file.write',
         [fullchain_path, fullchain]
     )
+    return True
 
 
 def main(**kwargs):
