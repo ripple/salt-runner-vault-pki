@@ -82,7 +82,7 @@ class SigningError(Exception):
     pass
 
 
-def get_user_id(source="~/.vault-id"):
+def get_secret_id(source="~/.vault-id"):
     """ Reads a vault user-id (UUID) from a file."""
     source = os.path.abspath(os.path.expanduser(source))
     user_id = None
@@ -122,17 +122,19 @@ def _get_vault_connection(config):
     """Opens a connection to vault and returns it.
 
     Uses configuration from the salt master config file for the vault
-    URL, app-id and user-id file.
+    URL, role-id and secret-id file.
     """
     try:
         conn = hvac.Client(url=config.get('url'))
-        user_id_file = config.get('vault_user_id_file')
-        if user_id_file:
-            user_id = get_user_id(source=user_id_file)
+        secret_id_file = config.get('vault_secret_id_file')
+        if secret_id_file:
+            secret_id = get_secret_id(source=secret_id_file)
         else:
-            user_id = get_user_id()
-        # TODO(dmw) Move to App Role authentication.
-        conn.auth_app_id(config.get('app_id'), user_id)
+            secret_id = get_secret_id()
+        result = conn.auth_approle(config.get('role_id'), secret_id)
+        # Required until https://github.com/ianunruh/hvac/pull/90
+        # is merged, due in hvac 0.3.0
+        conn.token = result['auth']['client_token']
     except hvac.exceptions.VaultError as err:
         log.error('Vault error: {}'.format(err))
         return None
