@@ -184,7 +184,7 @@ def main(**kwargs):
     config = full_config.get('vault_pki_runner')
     if _verify_csr_ok(fqdn, csr):
         vault_conn = _get_vault_connection(config)
-        validity_period = config.get('validitiy_period',
+        validity_period = config.get('validity_period',
                                      CERT_VALIDITY_PERIOD)
         signing_params = {'alt_names': six.u(fqdn),
                           'csr': csr,
