@@ -44,6 +44,7 @@ __author__ = 'Daniel Wilcox (dmw@ripple.com)'
 import logging
 import os
 import six
+import yaml
 
 import hvac
 
@@ -94,6 +95,26 @@ def get_secret_id(source="~/.vault-id"):
         fd.close()
 
     return user_id
+
+
+def _get_host_overrides(config, hostname):
+    """Get host specific parameters from a vault_pki_overrides file.
+
+    Args: config a in-memory representation of /etc/salt/master.
+    Returns: A dictionary of Vault compatible keys for PKI signing.
+    """
+    override_file = config.get('vault_pki_overrides_file')
+    if not override_file:
+        return {}
+    try:
+        with open(override_file, 'r') as f:
+            override_data = yaml.load(f.read())
+    except (IOError, yaml.YAMLError):
+        log.warning(
+            'vault_pki_overrides_file is unreadable or not YaML, skipping.'
+        )
+        return {}
+    return override_data.get(hostname, {})
 
 
 def _verify_csr_ok(fqdn, csr_pem_data):
@@ -184,9 +205,19 @@ def main(**kwargs):
     config = full_config.get('vault_pki_runner')
     if _verify_csr_ok(fqdn, csr):
         vault_conn = _get_vault_connection(config)
-        validity_period = config.get('validity_period',
-                                     CERT_VALIDITY_PERIOD)
-        signing_params = {'alt_names': six.u(fqdn),
+        #TODO(dmw) Re-factor to slim main() and handle defaults better.
+        host_overrides = _get_host_overrides(config, fqdn)
+        if host_overrides.get('ttl'):
+            validity_period = host_overrides['ttl']
+        else:
+            validity_period = config.get('validity_period',
+                                         CERT_VALIDITY_PERIOD)
+        alt_names = set()
+        alt_names.add(six.u(fqdn))
+        if host_overrides.get('alt_names'):
+            for name in host_overrides['alt_names']:
+                alt_names.add(six.u(name))
+        signing_params = {'alt_names': ','.join(alt_names),
                           'csr': csr,
                           'common_name': six.u(fqdn),
                           'format': 'pem',
