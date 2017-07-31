@@ -213,11 +213,11 @@ def main(**kwargs):
             validity_period = config.get('validity_period',
                                          CERT_VALIDITY_PERIOD)
         alt_names = set()
-        alt_names.add(six.u(fqdn))
+        alt_names.add(fqdn)
         if host_overrides.get('alt_names'):
             for name in host_overrides['alt_names']:
-                alt_names.add(six.u(name))
-        signing_params = {'alt_names': ','.join(alt_names),
+                alt_names.add(name)
+        signing_params = {'alt_names': six.u(','.join(alt_names)),
                           'csr': csr,
                           'common_name': six.u(fqdn),
                           'format': 'pem',
