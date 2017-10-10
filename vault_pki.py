@@ -218,7 +218,17 @@ def main(**kwargs):
                 alt_names.add(six.u(name))
             log.info('Sending Vault signing with extra SANs: {}'.format(
                 ','.join(alt_names)))
+        ip_list = []
+        if host_overrides.get('ip_sans'):
+            try:
+                _, _, ip_list = socket.gethostbyname_ex(fqdn)
+                log.info('Vault signing with IPSANs: {}'.format(
+                    ', '.join(ip_list)))
+            except socket.gaierror:
+                log.warning('Failed to lookup FQDN "{}" for IPSANs'.format(
+                    fqdn))
         signing_params = {'alt_names': ','.join(alt_names),
+                          'ip_sans': ','.join(ip_list),
                           'csr': csr,
                           'common_name': six.u(fqdn),
                           'format': 'pem',
