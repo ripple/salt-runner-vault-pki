@@ -44,6 +44,7 @@ __author__ = 'Daniel Wilcox (dmw@ripple.com)'
 import logging
 import os
 import six
+import socket
 import yaml
 
 import hvac
