@@ -173,7 +173,8 @@ def _write_certs_to_minion(fqdn, dest_path, cert_data):
     cert_path = os.path.join(dest_path, CERT_FILENAME)
     fullchain_path = os.path.join(dest_path, FULLCHAIN_FILENAME)
     cert = cert_data['certificate']
-    fullchain = '\n'.join([cert, cert_data['issuing_ca']])
+    ca_chain = '\n'.join(cert_data['ca_chain'])
+    fullchain = '\n'.join([cert, ca_chain])
     write_cert = client.cmd(
         fqdn,
         'file.write',
