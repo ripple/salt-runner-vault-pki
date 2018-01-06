@@ -73,8 +73,8 @@ Especially relevant sections of Vault documentation:
 
 #### Development Vault Setup for Vault PKI
 
-What follows is not even a temporary solution for running Vault *all data will
-be lost* when the development Vault server stops.  Please consult the Vault
+What follows is not even a temporary solution for running Vault **all data will
+be lost** when the development Vault server stops.  Please consult the Vault
 documentation for how to setup a persistent Vault, this setup is for demonstration
 and early testing purposes only.  You have been warned.
 
@@ -143,9 +143,9 @@ read SECRET_ID
 
 Now it's time to do a test to make sure everything is working before
 adding the extra complexity of the Salt master + Vault PKI.  Make sure
-to set your ROLE_ID + SECRET_ID variables as above.
+to set your ```ROLE_ID``` + ```SECRET_ID``` variables as above.
 
-Here we'll be using curl rather than Vault to avoid use of $VAULT_TOKEN.
+Here we'll be using curl rather than Vault to avoid use of ```VAULT_TOKEN```.
 
 Plan of attack:
 - Authenticate via the new AppRole
@@ -287,7 +287,7 @@ reactor:
 
 Always restart the Salt master after editing its config file to ensure
 changes are picked up.
-```bash service salt-master restart```
+```service salt-master restart```
 
 ### Putting It All Together
 
@@ -306,9 +306,9 @@ salt 'my-minion.example.com' cmd.run 'ls -l /etc/vault_pki/live/$(hostname)/'
 If the certificate hasn't arrived check the Salt master logs.  The full CSR
 PEM block should be logged, overrides mentioned and a runner return block
 (or error) should be present as well.
-```bash less /var/log/salt/master```
+```less /var/log/salt/master```
 
-*That's it!*  Your minion will check the certificate daily and request
+**That's it!**  Your minion will check the certificate daily and request
 a new one when it's 50% through the validity period.
 
 See the [Vault PKI formula documentation](https://github.com/ripple/vault-pki-formula/)
