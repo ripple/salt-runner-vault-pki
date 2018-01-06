@@ -28,8 +28,8 @@ The CSR is verified, by way of checking the FQDN and the desired CN of
 the certificate, and the configured validity period is set as configured
 in the Salt master config file.
 
-It then makes a request to a configured Vault instance using App-ID
-authentication (yes this needs to change) and gets the CSR signed.
+It then makes a request to a configured Vault instance using AppRole
+authentication and gets the CSR signed.
 
 The resulting certificate, and a full chain (certificate appended with
 the CA's certificate), are written back to the minion at the given
@@ -37,16 +37,18 @@ destination path.
 
 
 Breakdown of the runner's steps:
-    - verify CSR is valid, aka matches hostname, has
+    - verify CSR is valid, aka CN matches hostname, has
       expiration, etc.
+    - apply overrides to CSR for SANs, IPSANs, TTL.
     - open connection to vault and authenticate
     - send CSR to vault to be signed and retrieve cert
     - use version number to write cert and chain into
       proper place on minion
 
-Steps that need to follow -- but the runner doesn't do:
-    - run vault_pki activate $version_number
-    - restart or otherwise inform servers a new certificate is in place
+Steps that follow -- but the runner doesn't do:
+    - the orchestrator runs vault_pki activate $version_number
+    - as part of activation, the vault_pki client will run post-activate
+      scripts to inform servers a new certificate is in place
 """
 
 from __future__ import absolute_import
