@@ -69,6 +69,8 @@ from cryptography.hazmat.backends import default_backend
 
 from salt import client as salt_client
 from salt import config as salt_config
+from salt import minion as salt_minion
+from salt.utils import minions as salt_minion_utils
 
 
 CERT_FILENAME = 'cert.pem'
@@ -122,15 +124,24 @@ def _get_host_overrides(config, hostname):
     override_file = config.get('vault_pki_overrides_file')
     if not override_file:
         return {}
+    opts = __opts__.copy()
+    opts['file_client'] = 'local'
+    minion = salt_minion.MasterMinion(opts)
+    overrides_filepath = minion.functions['cp.cache_file'](override_file)
     try:
-        with open(override_file, 'r') as f:
-            override_data = yaml.load(f.read())
+        with open(overrides_filepath, 'r') as f:
+            override_data = yaml.safe_load(f.read())
     except (IOError, yaml.YAMLError):
         log.warning(
             'vault_pki_overrides_file is unreadable or not YaML, skipping.'
         )
         return {}
-    return override_data.get(hostname, {})
+    # Check hostname against minions matching the pattern + return overrides.
+    ckminions = salt_minion_utils.CkMinions(__opts__)
+    for pattern, values in override_data.items():
+        if hostname in ckminions.check_minions(pattern, 'compound'):
+            return values
+    return {}
 
 
 def _verify_csr_ok(fqdn, csr_pem_data):
