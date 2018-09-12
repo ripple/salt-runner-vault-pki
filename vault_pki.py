@@ -141,7 +141,11 @@ def _get_host_overrides(config, hostname):
     # Check hostname against minions matching the pattern + return overrides.
     ckminions = salt_minion_utils.CkMinions(__opts__)
     for pattern, values in override_data.items():
-        if hostname in ckminions.check_minions(pattern, 'compound'):
+        minions =  ckminions.check_minions(pattern, 'compound')
+        if 'minions' in minions:
+            # In Salt 2018 this is now in a dictionary
+            minions = minions['minions']
+        if hostname in minions:
             return values
     return {}
 
