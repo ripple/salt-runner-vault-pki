@@ -159,7 +159,7 @@ def _verify_csr_ok(fqdn, csr_pem_data):
     """
     # TODO(dmw) Needs more thorough logging.
     csr_ok = False
-    csr = x509.load_pem_x509_csr(csr_pem_data, default_backend())
+    csr = x509.load_pem_x509_csr(str(csr_pem_data), default_backend())
     # TODO(dmw) Check subject alternative name (SAN) is valid as well.
     name_oid = x509.oid.NameOID.COMMON_NAME
     names = csr.subject.get_attributes_for_oid(name_oid)
@@ -167,7 +167,9 @@ def _verify_csr_ok(fqdn, csr_pem_data):
     log.info('CSR ({}): "{}"'.format(fqdn, csr_pem_data))
     if len(names) == 1:
         common_name = names[0].value
-        if six.u(fqdn) == common_name:
+        # Backwards compatbile Salt 2018 fix
+        fqdn = fqdn if type(fqdn) == unicode else six.u(fqdn)
+        if fqdn == common_name:
             csr_ok = True
     return csr_ok
 
@@ -249,7 +251,9 @@ def main(**kwargs):
         alt_names = set()
         if host_overrides.get('alt_names'):
             for name in host_overrides['alt_names']:
-                alt_names.add(six.u(name))
+                # Backwards compatbile Salt 2018 fix
+                name = name if type(name) == unicode else six.u(name)
+                alt_names.add(name)
             log.info('Sending Vault signing with extra SANs: {}'.format(
                 ','.join(alt_names)))
         ip_list = []
@@ -261,10 +265,12 @@ def main(**kwargs):
             except socket.gaierror:
                 log.warning('Failed to lookup FQDN "{}" for IPSANs'.format(
                     fqdn))
+        # Backwards compatible Salt 2018 fix
+        fqdn = fqdn if type(fqdn) == unicode else six.u(fqdn)
         signing_params = {'alt_names': ','.join(alt_names),
                           'ip_sans': ','.join(ip_list),
                           'csr': csr,
-                          'common_name': six.u(fqdn),
+                          'common_name': fqdn,
                           'format': 'pem',
                           'ttl': validity_period}
         pki_path = config.get('pki_path')
