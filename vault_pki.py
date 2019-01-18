@@ -58,10 +58,12 @@ from __future__ import unicode_literals
 
 __author__ = 'Daniel Wilcox (dmw@ripple.com)'
 
+import json
 import logging
 import os
 import six
 import socket
+import subprocess
 import yaml
 
 import hvac
@@ -197,6 +199,21 @@ def _get_vault_connection(config):
     return conn
 
 
+def _send_certs_to_minion(fqdn, dest_path, cert_data):
+    sock_dir = '/var/run/salt/master'
+    cert_path = os.path.join(dest_path, CERT_FILENAME)
+    fullchain_path = os.path.join(dest_path, FULLCHAIN_FILENAME)
+    cert = cert_data['certificate']
+    ca_chain = '\n'.join(cert_data['ca_chain'])
+    fullchain = '\n'.join([cert, ca_chain])
+    cert_info = {"cert": cert, "cert_path": cert_path, "fullchain": fullchain, "fullchain_path": fullchain_path}
+    payload = json.dumps({"data": cert_info})
+    tag = 'request/certificate'
+    send_event = subprocess.check_output("salt '{}' event.fire '{}' '{}'".format(fqdn, payload, tag), shell=True)
+
+    return True
+
+
 def _write_certs_to_minion(fqdn, dest_path, cert_data):
     """Writes signed cert back to requesting minion at specified path.
 
@@ -219,6 +236,7 @@ def _write_certs_to_minion(fqdn, dest_path, cert_data):
         'file.write',
         [fullchain_path, fullchain]
     )
+
     # TODO(dmw) Figure out odd client.cmd rc's and error if needed.
     return True
 
@@ -282,10 +300,10 @@ def main(**kwargs):
             log.error('Vault error: {}'.format(err))
             raise SigningError('Error signing from vault!')
         cert_data = vault_response.json()['data']
-        write_ok = _write_certs_to_minion(fqdn, dest_cert_path, cert_data)
-        if not write_ok:
-            log.error('Error writing cert to minion!')
+        send_ok = _send_certs_to_minion(fqdn, dest_cert_path, cert_data)
+        if not send_ok:
+            log.error('Error sending cert to minion!')
         else:
-            log.info('Wrote new certificate to {}'.format(fqdn))
+            log.info('Sent new certificate to {}'.format(fqdn))
     else:
         raise SigningError('CSR missing or invalid, check fqdn.')
