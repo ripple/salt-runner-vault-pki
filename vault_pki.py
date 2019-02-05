@@ -83,6 +83,7 @@ FULLCHAIN_FILENAME = 'fullchain.pem'
 CERT_VALIDITY_PERIOD = '{:d}h'.format(30 * 24)
 
 SALT_MASTER_CONFIG = '/etc/salt/master'
+SOCK_DIR = '/var/run/salt/master'
 
 default_level = logging.INFO
 log = logging.getLogger(__file__)
@@ -200,7 +201,7 @@ def _get_vault_connection(config):
 
 
 def _send_certs_to_minion(fqdn, dest_path, cert_data):
-    sock_dir = '/var/run/salt/master'
+    sock_dir = SOCK_DIR
     cert_path = os.path.join(dest_path, CERT_FILENAME)
     fullchain_path = os.path.join(dest_path, FULLCHAIN_FILENAME)
     cert = cert_data['certificate']
