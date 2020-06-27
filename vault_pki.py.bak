@@ -51,10 +51,10 @@ Steps that follow -- but the runner doesn't do:
       scripts to inform servers a new certificate is in place
 """
 
-
-
-
-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 __author__ = 'Daniel Wilcox (dmw@ripple.com)'
 
@@ -140,7 +140,7 @@ def _get_host_overrides(config, hostname):
         return {}
     # Check hostname against minions matching the pattern + return overrides.
     ckminions = salt_minion_utils.CkMinions(__opts__)
-    for pattern, values in list(override_data.items()):
+    for pattern, values in override_data.items():
         minions =  ckminions.check_minions(pattern, 'compound')
         if 'minions' in minions:
             # In Salt 2018 this is now in a dictionary
@@ -168,7 +168,7 @@ def _verify_csr_ok(fqdn, csr_pem_data):
     if len(names) == 1:
         common_name = names[0].value
         # Backwards compatbile Salt 2018 fix
-        fqdn = fqdn if type(fqdn) == str else six.u(fqdn)
+        fqdn = fqdn if type(fqdn) == unicode else six.u(fqdn)
         if fqdn == common_name:
             csr_ok = True
     return csr_ok
@@ -252,7 +252,7 @@ def main(**kwargs):
         if host_overrides.get('alt_names'):
             for name in host_overrides['alt_names']:
                 # Backwards compatbile Salt 2018 fix
-                name = name if type(name) == str else six.u(name)
+                name = name if type(name) == unicode else six.u(name)
                 alt_names.add(name)
             log.info('Sending Vault signing with extra SANs: {}'.format(
                 ','.join(alt_names)))
@@ -266,7 +266,7 @@ def main(**kwargs):
                 log.warning('Failed to lookup FQDN "{}" for IPSANs'.format(
                     fqdn))
         # Backwards compatible Salt 2018 fix
-        fqdn = fqdn if type(fqdn) == str else six.u(fqdn)
+        fqdn = fqdn if type(fqdn) == unicode else six.u(fqdn)
         signing_params = {'alt_names': ','.join(alt_names),
                           'ip_sans': ','.join(ip_list),
                           'csr': csr,
